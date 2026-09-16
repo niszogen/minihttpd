@@ -134,7 +134,7 @@ void minihttpd_run(minihttpd_t *server) {
 		}
 
 		conn_ctx_t *conn = malloc(sizeof(conn_ctx_t));
-		if(!conn) {
+		if (!conn) {
 			close(client_socket);
 			continue;
 		}

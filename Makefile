@@ -2,47 +2,50 @@ CC = gcc
 CFLAGS = -Wall -Wextra --pedantic
 PREFIX ?= /usr/local
 LIBDIR ?= $(PREFIX)/lib
+BINDIR ?= $(PREFIX)/bin
 INSTALL ?= install
 BUILD_DIR ?= build
 
-all: $(BUILD_DIR)/libminihttpd.a $(BUILD_DIR)/libminihttpd.so.1 $(BUILD_DIR)/examples/hello $(BUILD_DIR)/examples/files
+NAME = minihttpd
+SONAME = lib$(NAME).so.1
+LIB_A = $(BUILD_DIR)/lib$(NAME).a
+LIB_SO = $(BUILD_DIR)/$(SONAME)
+BIN = $(BUILD_DIR)/$(NAME)
+OBJ = $(BUILD_DIR)/$(NAME).o
 
-$(BUILD_DIR)/minihttpd.o: minihttpd.c minihttpd.h
-	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -fPIC -c minihttpd.c -o $@
+all: $(LIB_A) $(LIB_SO) $(BIN)
 
-$(BUILD_DIR)/libminihttpd.a: $(BUILD_DIR)/minihttpd.o
-	@mkdir -p $(dir $@)
+$(BUILD_DIR):
+	@mkdir -p $@
+
+$(OBJ): lib/$(NAME).c lib/$(NAME).h | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -fPIC -c $< -o $@
+
+$(LIB_A): $(OBJ)
 	ar rcs $@ $^
 
-$(BUILD_DIR)/libminihttpd.so.1: $(BUILD_DIR)/minihttpd.o
-	@mkdir -p $(dir $@)
-	$(CC) -shared -o $@ $^
+$(LIB_SO): $(OBJ)
+	$(CC) -shared -Wl,-soname,$(SONAME) -o $@ $^
+	ln -sf $(SONAME) $(BUILD_DIR)/lib$(NAME).so
 
-$(BUILD_DIR)/examples/hello: examples/hello.c $(BUILD_DIR)/libminihttpd.a
-	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $< $(BUILD_DIR)/libminihttpd.a -o $@
+$(BIN): main.c $(LIB_SO)
+	$(CC) $(CFLAGS) $< -L$(BUILD_DIR) -l$(NAME) -lpthread -Wl,-rpath,'$$ORIGIN':$(LIBDIR) -o $@
 
-$(BUILD_DIR)/examples/files: examples/files.c $(BUILD_DIR)/libminihttpd.a
-	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $< $(BUILD_DIR)/libminihttpd.a -o $@
+run: $(BIN)
+	./$(BIN)
 
-run-hello: $(BUILD_DIR)/examples/hello
-	./$(BUILD_DIR)/examples/hello
-
-run-files: $(BUILD_DIR)/examples/files
-	./$(BUILD_DIR)/examples/files
-
-install: $(BUILD_DIR)/libminihttpd.so.1
-	$(INSTALL) -d $(DESTDIR)$(LIBDIR)
-	$(INSTALL) -m 755 $< $(DESTDIR)$(LIBDIR)/libminihttpd.so.1
-	ln -sf libminihttpd.so.1 $(DESTDIR)$(LIBDIR)/libminihttpd.so
+install: $(LIB_SO) $(BIN)
+	$(INSTALL) -d $(DESTDIR)$(LIBDIR) $(DESTDIR)$(BINDIR)
+	$(INSTALL) -m 755 $(LIB_SO) $(DESTDIR)$(LIBDIR)/$(SONAME)
+	ln -sf $(SONAME) $(DESTDIR)$(LIBDIR)/lib$(NAME).so
+	$(INSTALL) -m 755 $(BIN) $(DESTDIR)$(BINDIR)/$(NAME)
 
 uninstall:
-	rm -f $(DESTDIR)$(LIBDIR)/libminihttpd.so.1 $(DESTDIR)$(LIBDIR)/libminihttpd.so
+	rm -f $(DESTDIR)$(LIBDIR)/$(SONAME) $(DESTDIR)$(LIBDIR)/lib$(NAME).so
+	rm -f $(DESTDIR)$(BINDIR)/$(NAME)
 
 clean:
 	rm -rf $(BUILD_DIR)
-	rm -f *.o *.a *.so* examples/*.o examples/hello examples/files
 
-.PHONY: all run-hello run-files clean install uninstall
+.PHONY: all run clean install uninstall
+

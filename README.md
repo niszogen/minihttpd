@@ -1,9 +1,10 @@
-# libminihttpd
-**libminihttpd** is a simple C library for making a http/1.1 server. See [examples/hello.c](examples/hello.c) to see how it works.
+# minihttpd
+**minihttpd** is a simple multithreaded http/1.1 server, written in C.
 
 ## Instalation
 
 ```bash
-git clone https://github.com/niszogen/libminihttpd
+git clone https://github.com/niszogen/minihttpd
 make all
+sudo make install
 ```
