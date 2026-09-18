@@ -1,12 +1,20 @@
 # minihttpd
 **minihttpd** is a simple multithreaded http/1.1 server, written in C.
 
+## Dependencies
+
+- C99 compatible compiler
+- meson or [muon](https://muon.build/)
+- ninja
+
 ## Instalation
 
 ```bash
 git clone https://github.com/niszogen/minihttpd
+
 meson setup build
 ninja -C build
+
 sudo ninja -C build install
 ```
 
