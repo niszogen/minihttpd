@@ -2,6 +2,7 @@
 #define FLAG_IMPLEMENTATION
 #include "thirdparty/flag.h"
 
+#include <fcntl.h>
 #include <signal.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -44,9 +45,10 @@ static char *get_mime_type(const char *path) {
 
 static minihttpd_response_t handler(const char *path, void *user_data) {
 	struct server *server = (struct server *)user_data;
+	minihttpd_response_t res = {.file_fd = -1};
 
 	if (strstr(path, "..")) {
-		return (minihttpd_response_t){NULL, 0, NULL, 0};
+		return res;
 	}
 
 	char filepath[256];
@@ -56,37 +58,20 @@ static minihttpd_response_t handler(const char *path, void *user_data) {
 		snprintf(filepath, sizeof(filepath), "%s%s", server->public_dir, path);
 	}
 
-	FILE *f = fopen(filepath, "rb");
-	if (!f) {
-		return (minihttpd_response_t){NULL, 0, NULL, 0};
+	struct stat st;
+	if (stat(filepath, &st) != 0 || S_ISDIR(st.st_mode)) {
+		return res;
 	}
 
-	if (fseek(f, 0, SEEK_END) != 0) {
-		fclose(f);
-		return (minihttpd_response_t){NULL, 0, NULL, 0};
-	}
-	long size = ftell(f);
-	if (size < 0) {
-		fclose(f);
-		return (minihttpd_response_t){NULL, 0, NULL, 0};
-	}
-	rewind(f);
-
-	char *buffer = malloc((size_t)size);
-	if (!buffer) {
-		fclose(f);
-		return (minihttpd_response_t){NULL, 0, NULL, 0};
+	int fd = open(filepath, O_RDONLY);
+	if (fd < 0) {
+		return res;
 	}
 
-	size_t read_bytes = fread(buffer, 1, (size_t)size, f);
-	fclose(f);
-
-	if (read_bytes != (size_t)size) {
-		free(buffer);
-		return (minihttpd_response_t){NULL, 0, NULL, 0};
-	}
-
-	return (minihttpd_response_t){buffer, (size_t)size, get_mime_type(filepath), 1};
+	res.file_fd = fd;
+	res.file_len = (size_t)st.st_size;
+	res.mime_type = get_mime_type(filepath);
+	return res;
 }
 
 void usage(FILE *stream, char *argv0) {
@@ -119,9 +104,9 @@ int main(int argc, char **argv) {
 	argc = flag_rest_argc();
 	argv = flag_rest_argv();
 
-	if (argc > 0) {
+	if (argc > 0)
 		minihttpd.public_dir = argv[0];
-	} else
+	else
 		minihttpd.public_dir = ".";
 
 	struct stat statbuf;

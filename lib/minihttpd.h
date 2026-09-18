@@ -8,6 +8,8 @@ typedef struct {
 	size_t content_len;
 	const char *mime_type;
 	int owns_content;
+	int file_fd;
+	size_t file_len;
 } minihttpd_response_t;
 
 typedef minihttpd_response_t (*minihttpd_handler_t)(const char *path, void *user_data);

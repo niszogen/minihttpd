@@ -1,4 +1,5 @@
 #include "minihttpd.h"
+#include "mh_platform.h"
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -14,32 +15,24 @@
 #define BUFFER_SIZE 8192
 #define SERVER_STRING "Server: libminihttpd\r\n"
 
-char *build_http_response(const minihttpd_response_t *res, size_t *response_len) {
-	const char *status = res->content ? "200 OK" : "404 Not Found";
-	const char *mime_type = res->content ? res->mime_type : "text/plain";
-	const char *content = res->content ? res->content : "Not Found\n";
-	size_t content_len = res->content ? res->content_len : strlen(content);
+static int build_header(const minihttpd_response_t *res, char *out, size_t cap) {
+	int has_body = res->file_fd >= 0 || res->content;
+	const char *status = has_body ? "200 OK" : "404 Not Found";
+	const char *mime_type = has_body ? res->mime_type : "text/plain";
+	size_t len = res->file_fd >= 0 ? res->file_len : has_body ? res->content_len
+															  : strlen("Not Found\n");
 
-	char header[256];
-
-	int header_len = snprintf(header, sizeof(header),
+	int header_len = snprintf(out, cap,
 							  "HTTP/1.1 %s\r\n"
 							  "Content-Type: %s\r\n"
 							  "Content-Length: %zu\r\n" SERVER_STRING
 							  "\r\n",
-							  status, mime_type, content_len);
-	if (header_len < 0 || header_len >= (int)sizeof(header)) {
-		header_len = sizeof(header) - 1;
+							  status, mime_type, len);
+	if (header_len < 0 || header_len >= (int)cap) {
+		header_len = cap - 1;
 	}
 
-	*response_len = (size_t)header_len + content_len;
-	char *response = malloc(*response_len);
-	if (!response)
-		return NULL;
-	memcpy(response, header, header_len);
-	memcpy(response + header_len, content, content_len);
-
-	return response;
+	return header_len;
 }
 
 void *handle_request(void *arg) {
@@ -66,16 +59,21 @@ void *handle_request(void *arg) {
 	printf("[INFO] Client connected from: %s\n", url_encoded_name);
 
 	minihttpd_response_t res = server->handler(url_encoded_name, server->user_data);
-	size_t response_len;
-	char *response = build_http_response(&res, &response_len);
 
-	if (response) {
-		write(client_socket, response, response_len);
-		free(response);
+	char header[256];
+	int hdr_len = build_header(&res, header, sizeof(header));
+
+	if (res.file_fd >= 0) {
+		mh_sendfile(client_socket, header, (size_t)hdr_len, res.file_fd, res.file_len);
+		close(res.file_fd);
+	} else {
+		const char *body = res.content ? res.content : "Not found\n";
+		size_t body_len = res.content ? res.content_len : strlen(body);
+		mh_write_all(client_socket, header, (size_t)hdr_len);
+		mh_write_all(client_socket, body, body_len);
+		if (res.owns_content)
+			free((void *)res.content);
 	}
-
-	if (res.owns_content)
-		free((void *)res.content);
 
 	close(client_socket);
 	return NULL;

@@ -5,8 +5,9 @@
 
 ```bash
 git clone https://github.com/niszogen/minihttpd
-make all
-sudo make install
+meson setup build
+ninja -C build
+sudo ninja -C build install
 ```
 
 ## License
