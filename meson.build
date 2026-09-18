@@ -3,7 +3,7 @@ project(
   'c',
   default_options: [
     'warning_level=2',
-    'c_std=c11',
+    'c_std=c99',
   ],
 )
 
