@@ -1,8 +1,8 @@
 #include "lib/minihttpd.h"
-#include <signal.h>
 #define FLAG_IMPLEMENTATION
 #include "thirdparty/flag.h"
 
+#include <signal.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
