@@ -1,9 +1,8 @@
 #include "lib/minihttpd.h"
-#define FLAG_IMPLEMENTATION
-#include "thirdparty/flag.h"
 
 #include <fcntl.h>
 #include <signal.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -77,7 +76,8 @@ static minihttpd_response_t handler(const char *path, void *user_data) {
 void usage(FILE *stream, char *argv0) {
 	fprintf(stream, "Usage: %s [flags] /path/to/wwwroot\n", argv0);
 	fprintf(stream, "OPTIONS:\n");
-	flag_print_options(stream);
+	fprintf(stream, "\t--help\n\t\tPrint this help to stdout and exit with 0\n");
+	fprintf(stream, "\t--port <int>\n\t\tSpecify the port number (default: 8080)\n");
 }
 
 void exception_handler(int sg) {
@@ -90,38 +90,47 @@ void exception_handler(int sg) {
 
 int main(int argc, char **argv) {
 	struct server minihttpd = {0};
-	char *argv0 = argv[0];
+	minihttpd.port = 8080;
+	minihttpd.public_dir = ".";
+	int user_root = false;
 
-	bool *help = flag_bool("-help", false, "Print this help to stdout and exit with 0");
-	size_t *port = flag_size("-port", 8080, "Specify the port number");
+	for (int i = 1; i < argc; i++) {
+		const char *arg = argv[i];
 
-	if (!flag_parse(argc, argv)) {
-		usage(stderr, argv0);
-		flag_print_error(stderr);
-		exit(1);
+		if (strcmp(arg, "--help") == 0) {
+			usage(stdout, argv[0]);
+			return 0;
+		} else if (strcmp(arg, "--port") == 0) {
+			if (++i >= argc) {
+				fprintf(stderr, "[ERR] port needs a value\n");
+				usage(stderr, argv[0]);
+				return 1;
+			}
+			char *end;
+			long p = strtol(argv[i], &end, 10);
+			if (*argv[i] == '\0' || *end != '\0' || p < 1 || p > 65535) {
+				fprintf(stderr, "[ERR] invalid port '%s'\n", argv[i]);
+				return 1;
+			}
+			minihttpd.port = p;
+		} else if (!user_root) {
+			minihttpd.public_dir = arg;
+			user_root = true;
+		} else {
+			fprintf(stderr, "[ERR] unexpected argument %s\n", arg);
+			usage(stderr, argv[0]);
+			return 1;
+		}
 	}
-
-	argc = flag_rest_argc();
-	argv = flag_rest_argv();
-
-	if (argc > 0)
-		minihttpd.public_dir = argv[0];
-	else
-		minihttpd.public_dir = ".";
 
 	struct stat statbuf;
 	if (stat(minihttpd.public_dir, &statbuf) != 0) {
 		fprintf(stderr, "Specified path is not a valid directory!\n");
-		usage(stderr, argv0);
+		usage(stderr, argv[0]);
 		return 1;
 	}
 
-	if (*help) {
-		usage(stdout, argv0);
-		exit(0);
-	}
-
-	minihttpd_t *server = minihttpd_init(*port, handler);
+	minihttpd_t *server = minihttpd_init(minihttpd.port, handler);
 	if (!server) {
 		fprintf(stderr, "Failed to start server\n");
 		return 1;
@@ -134,7 +143,7 @@ int main(int argc, char **argv) {
 	sigaction(SIGINT, &sa, NULL);
 
 	server->user_data = &minihttpd;
-	printf("Listening on: http://localhost:%i from: %s\n", (int)*port, minihttpd.public_dir);
+	printf("Listening on: http://localhost:%i from: %s\n", minihttpd.port, minihttpd.public_dir);
 	minihttpd_run(server);
 
 	minihttpd_stop(server);
