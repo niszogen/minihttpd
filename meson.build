@@ -2,12 +2,10 @@ project(
   'minihttpd',
   'c',
   default_options: [
-    'warning_level=2',
+    'warning_level=3',
     'c_std=c99',
   ],
 )
-
-add_project_arguments('-pedantic', language: 'c')
 
 threads_dep = dependency('threads')
 lib_inc = include_directories('lib')
