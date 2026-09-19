@@ -82,7 +82,7 @@ void usage(FILE *stream, char *argv0) {
 
 void exception_handler(int sg) {
 	(void)sg;
-	printf("SIGINT detected, stopping...\n");
+	printf(" SIGINT detected, stopping...\n");
 	if (s_server) {
 		s_server->running = 0;
 	}
