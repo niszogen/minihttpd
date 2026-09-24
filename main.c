@@ -80,7 +80,7 @@ void usage(FILE *stream, char *argv0) {
 	fprintf(stream, "\t--port <int>\n\t\tSpecify the port number (default: 8080)\n");
 }
 
-void exception_handler(int sg) {
+static void exception_handler(int sg) {
 	(void)sg;
 	printf(" SIGINT detected, stopping...\n");
 	if (s_server) {
@@ -88,7 +88,7 @@ void exception_handler(int sg) {
 	}
 }
 
-int main(int argc, char **argv) {
+int main(const int argc, char **argv) {
 	struct server minihttpd = {0};
 	minihttpd.port = 8080;
 	minihttpd.public_dir = ".";
@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
 				return 1;
 			}
 			char *end;
-			long p = strtol(argv[i], &end, 10);
+			const long p = strtol(argv[i], &end, 10);
 			if (*argv[i] == '\0' || *end != '\0' || p < 1 || p > 65535) {
 				fprintf(stderr, "[ERR] invalid port '%s'\n", argv[i]);
 				return 1;
