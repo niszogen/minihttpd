@@ -4,8 +4,8 @@
 ## Dependencies
 
 - C99 compatible compiler
-- meson or [muon](https://muon.build/)
-- ninja
+- [meson](https://mesonbuild.com/) or [muon](https://muon.build/)
+- [ninja](https://ninja-build.org/) or [samurai](https://github.com/michaelforney/samurai)
 
 ## Instalation
 
