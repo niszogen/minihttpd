@@ -16,7 +16,7 @@ minihttpd_lib = both_libraries(
   sources: ['lib/minihttpd.c', 'lib/mh_platform.c'],
   include_directories: lib_inc,
   dependencies: threads_dep,
-  soversion: '2',
+  soversion: '2.1',
   install: true,
 )
 

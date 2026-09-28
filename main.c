@@ -12,6 +12,7 @@
 #include <time.h>
 
 struct server {
+	const char *addr;
 	int port;
 	const char *public_dir;
 };
@@ -78,6 +79,7 @@ void usage(FILE *stream, char *argv0) {
 	fprintf(stream, "OPTIONS:\n");
 	fprintf(stream, "\t--help\n\t\tPrint this help to stdout and exit with 0\n");
 	fprintf(stream, "\t--port <int>\n\t\tSpecify the port number (default: 8080)\n");
+	fprintf(stream, "\t--addr <string>\n\t\tSpecify the listen address (default: 0.0.0.0)\n");
 }
 
 static void exception_handler(int sg) {
@@ -90,6 +92,7 @@ static void exception_handler(int sg) {
 
 int main(const int argc, char **argv) {
 	struct server minihttpd = {0};
+	minihttpd.addr = NULL;
 	minihttpd.port = 8080;
 	minihttpd.public_dir = ".";
 	int user_root = false;
@@ -113,6 +116,13 @@ int main(const int argc, char **argv) {
 				return 1;
 			}
 			minihttpd.port = p;
+		} else if (strcmp(arg, "--addr") == 0) {
+			if (++i >= argc) {
+				fprintf(stderr, "[ERR] addr needs a value\n");
+				usage(stderr, argv[0]);
+				return 1;
+			}
+			minihttpd.addr = argv[i];
 		} else if (!user_root) {
 			minihttpd.public_dir = arg;
 			user_root = true;
@@ -130,7 +140,7 @@ int main(const int argc, char **argv) {
 		return 1;
 	}
 
-	minihttpd_t *server = minihttpd_init(minihttpd.port, handler);
+	minihttpd_t *server = minihttpd_init(minihttpd.addr, minihttpd.port, handler);
 	if (!server) {
 		fprintf(stderr, "Failed to start server\n");
 		return 1;
@@ -143,7 +153,9 @@ int main(const int argc, char **argv) {
 	sigaction(SIGINT, &sa, NULL);
 
 	server->user_data = &minihttpd;
-	printf("Listening on: http://localhost:%i from: %s\n", minihttpd.port, minihttpd.public_dir);
+	printf("Listening on: http://%s:%i from: %s\n",
+		   minihttpd.addr ? minihttpd.addr : "localhost",
+		   minihttpd.port, minihttpd.public_dir);
 	minihttpd_run(server);
 
 	minihttpd_stop(server);

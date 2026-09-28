@@ -28,7 +28,7 @@ typedef struct {
 	minihttpd_t *server;
 } conn_ctx_t;
 
-minihttpd_t *minihttpd_init(int port, minihttpd_handler_t handler);
+minihttpd_t *minihttpd_init(const char *addr, int port, minihttpd_handler_t handler);
 void minihttpd_run(minihttpd_t *server);
 void minihttpd_stop(minihttpd_t *server);
 void minihttpd_free(minihttpd_t *server);

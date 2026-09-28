@@ -79,11 +79,12 @@ void *handle_request(void *arg) {
 	return NULL;
 }
 
-minihttpd_t *minihttpd_init(int port, minihttpd_handler_t handler) {
+minihttpd_t *minihttpd_init(const char *addr, int port, minihttpd_handler_t handler) {
 	minihttpd_t *server = malloc(sizeof(minihttpd_t));
 	if (!server)
 		return NULL;
 	struct sockaddr_in address;
+	memset(&address, 0, sizeof(address));
 
 	server->listen_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (server->listen_fd < 0) {
@@ -94,8 +95,18 @@ minihttpd_t *minihttpd_init(int port, minihttpd_handler_t handler) {
 	server->running = 0;
 
 	address.sin_family = AF_INET;
-	address.sin_addr.s_addr = INADDR_ANY;
 	address.sin_port = htons(port);
+
+	if (!addr || *addr == '\0' || strcmp(addr, "0.0.0.0") == 0) {
+		address.sin_addr.s_addr = INADDR_ANY;
+	} else if (strcmp(addr, "localhost") == 0) {
+		inet_pton(AF_INET, "127.0.0.1", &address.sin_addr);
+	} else if (inet_pton(AF_INET, addr, &address.sin_addr) <= 0) {
+		fprintf(stderr, "[ERR] Invalid address\n");
+		close(server->listen_fd);
+		free(server);
+		return NULL;
+	}
 
 	if (bind(server->listen_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
 		fprintf(stderr, "[ERR] Bind failed\n");
