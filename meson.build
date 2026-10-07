@@ -7,6 +7,7 @@ project(
     'c_std=c99',
   ],
 )
+add_project_arguments('-D_POSIX_C_SOURCE=200809L', language : 'c')
 
 threads_dep = dependency('threads')
 lib_inc = include_directories('lib')
