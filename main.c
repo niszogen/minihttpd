@@ -35,6 +35,8 @@ static char *get_mime_type(const char *path) {
 		return "image/x-icon";
 	else if (strcasecmp(dot, ".png") == 0)
 		return "image/png";
+	else if (strcasecmp(dot, ".webp") == 0)
+		return "image/webp";
 	else if (strcasecmp(dot, ".jxl") == 0)
 		return "image/jxl";
 	else if (strcasecmp(dot, ".txt") == 0)
