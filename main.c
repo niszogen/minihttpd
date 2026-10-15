@@ -1,5 +1,3 @@
-#include "lib/minihttpd.h"
-
 #include <fcntl.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -10,6 +8,8 @@
 #include <strings.h>
 #include <sys/stat.h>
 #include <time.h>
+
+#include "lib/minihttpd.h"
 
 struct server {
 	const char *addr;

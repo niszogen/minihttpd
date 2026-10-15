@@ -1,8 +1,9 @@
-#include "../minihttpd.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
+#include "../minihttpd.h"
 
 static minihttpd_response_t handler(const char *path, void *user_data) {
 	(void)user_data;
@@ -33,7 +34,7 @@ static minihttpd_response_t handler(const char *path, void *user_data) {
 		return (minihttpd_response_t){body, strlen(body), "application/json", 0};
 	}
 
-	return (minihttpd_response_t){NULL, 0, NULL, 0}; // -> 404
+	return (minihttpd_response_t){NULL, 0, NULL, 0};  // -> 404
 }
 
 int main(int argc, char **argv) {
