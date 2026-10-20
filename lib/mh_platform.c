@@ -4,7 +4,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#if defined(__linux__)
+#ifdef __linux__
 #include <sys/sendfile.h>
 #endif
 
@@ -23,7 +23,7 @@ ssize_t mh_write_all(int sock, const void *buf, size_t len) {
 	return sent;
 }
 
-#if defined(__linux__)
+#ifdef __linux__
 
 ssize_t mh_sendfile(int sock, const void *hdr, size_t hdr_len, int file_fd, size_t file_len) {
 	if (mh_write_all(sock, hdr, hdr_len) < 0)

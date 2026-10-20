@@ -30,7 +30,7 @@ minihttpd_dep = declare_dependency(
 
 executable(
   'minihttpd',
-  sources: ['main.c'],
+  sources: ['src/main.c', 'src/handler.c'],
   include_directories: [include_directories('.'), lib_inc],
   link_with: minihttpd_lib,
   dependencies: threads_dep,
