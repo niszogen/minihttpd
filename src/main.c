@@ -11,6 +11,9 @@
 #include <sys/stat.h>
 #include <time.h>
 
+#ifdef __OpenBSD__
+#include <unistd.h>
+#endif
 
 #include "handler.h"
 #include "../lib/minihttpd.h"
@@ -94,6 +97,18 @@ int main(const int argc, char **argv) {
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_handler = exception_handler;
 	sigaction(SIGINT, &sa, NULL);
+
+#ifdef __OpenBSD__
+	if (unveil(minihttpd.public_dir, "r") == -1) {
+		fprintf(stderr, "[ERR] Cannot call unveil");
+		return 1;
+	}
+
+	if (pledge("stdio inet rpath", 0) == -1) {
+		fprintf(stderr, "[ERR] Cannot call pledge");
+		return 1;
+	}
+#endif
 
 	server->user_data = &minihttpd;
 	printf("Listening on: http://%s:%i from: %s\n",
