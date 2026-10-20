@@ -12,12 +12,11 @@ add_project_arguments('-D_POSIX_C_SOURCE=200809L', language: 'c')
 threads_dep = dependency('threads')
 lib_inc = include_directories('lib')
 
-minihttpd_lib = both_libraries(
+minihttpd_lib = static_library(
   'minihttpd',
   sources: ['lib/minihttpd.c', 'lib/mh_platform.c'],
   include_directories: lib_inc,
   dependencies: threads_dep,
-  soversion: '2.1',
   install: true,
 )
 
