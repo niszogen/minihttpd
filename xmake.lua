@@ -1,0 +1,20 @@
+set_project("minihttpd")
+set_version("1.0")
+
+set_languages("c99")
+set_warnings("allextra")
+add_defines("_POSIX_C_SOURCE=200809L")
+
+target("libminihttpd")
+set_kind("static")
+add_files("lib/minihttpd.c", "lib/mh_platform.c")
+add_includedirs("lib", { public = true })
+add_syslinks("pthread")
+set_basename("minihttpd")
+
+target("minihttpd")
+set_kind("binary")
+add_files("src/main.c", "src/handler.c")
+add_includedirs(".", "lib")
+add_deps("libminihttpd")
+add_syslinks("pthread")
