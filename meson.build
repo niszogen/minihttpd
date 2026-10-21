@@ -17,7 +17,6 @@ minihttpd_lib = static_library(
   sources: ['lib/minihttpd.c', 'lib/mh_platform.c'],
   include_directories: lib_inc,
   dependencies: threads_dep,
-  install: true,
 )
 
 install_headers('lib/minihttpd.h')
