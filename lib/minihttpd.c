@@ -134,7 +134,7 @@ void minihttpd_run(minihttpd_t *server) {
 		socklen_t client_addr_len = sizeof(client_addr);
 		int client_socket = -1;
 
-		client_socket = accept(server->listen_fd, (struct sockaddr *)&client_addr, &client_addr_len);
+		client_socket = mh_accept(server->listen_fd, (struct sockaddr *)&client_addr, &client_addr_len);
 
 		if (client_socket < 0) {
 			if (!server->running)
